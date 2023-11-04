@@ -1177,13 +1177,12 @@
 - name: terra-classic
   github-organization: classic-terra
   github-repo: core
-  dockerfile: lunc
+  dockerfile: cosmos
   build-target: make install
   binaries:
     - /go/bin/terrad
   build-env:
     - BUILD_TAGS=muslc
-
 
 # Thorchain
 - name: thorchain
