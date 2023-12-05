@@ -114,7 +114,7 @@
   dockerfile: cosmos
   build-target: make build
   binaries:
-    - build/archwayd  
+    - build/archwayd
   build-env:
     - BUILD_TAGS=muslc
 
@@ -350,7 +350,6 @@
 # Chihuahua
 - name: chihuahua
   github-organization: ChihuahuaChain
-  #github-organization: PFC-Validator
   github-repo: chihuahua
   dockerfile: cosmos
   build-target: make install
@@ -503,6 +502,15 @@
   binaries:
     - /go/bin/dualityd
 
+  # Dymension
+- name: dymension
+  github-organization: dymensionxyz
+  github-repo: dymension
+  dockerfile: cosmos
+  build-target: make install
+  binaries:
+    - /go/bin/dymd
+
 # dydx
 - name: dydx
   github-organization: dydxprotocol
@@ -512,31 +520,6 @@
   build-dir: protocol
   binaries:
     - /go/bin/dydxprotocold
-
-# dydx
-#    wget https://storage.googleapis.com/strangelove-public/dydx/dydxprotocold-${VERSION}-linux-amd64
-- name: dydx.x
-  pre-build: |
-    apt update
-    wget https://github.com/dydxprotocol/v4-chain/releases/download/protocol/${VERSION}/dydxprotocold-${VERSION}-linux-amd64.tar.gz
-    tar -zxvf dydxprotocold-v1.0.0-linux-amd64.tar.gz
-    mv build/dydxprotocold-${VERSION}-linux-amd64 /usr/bin/dydxprotocold
-    chmod 755 /usr/bin/dydxprotocold
-  binaries:
-    - /usr/bin/dydxprotocold
-  platforms:
-    - linux/amd64
-- name: dydxX
-  pre-build: |
-    apt update
-    wget https://github.com/dydxprotocol/v4-chain/releases/download/protocol/${VERSION}/dydxprotocold-${VERSION}-linux-amd64.tar.gz
-    tar -zxvf dydxprotocold-v1.0.0-linux-amd64.tar.gz
-    mv build/dydxprotocold-${VERSION}-linux-amd64 /usr/bin/dydxprotocold
-    chmod 755 /usr/bin/dydxprotocold
-  binaries:
-    - /usr/bin/dydxprotocold
-  platforms:
-    - linux/amd64
 
 # Emoney
 - name: emoney
@@ -808,7 +791,7 @@
   build-env:
     - LEDGER_ENABLED=false
     - BUILD_TAGS=muslc
-    
+
 # Nomic
 - name: nomic
   github-organization: nomic-io
@@ -1173,7 +1156,7 @@
   build-env:
     - BUILD_TAGS=muslc
 
-# Terra-classic
+# Terra Classic
 - name: terra-classic
   github-organization: classic-terra
   github-repo: core
@@ -1208,6 +1191,13 @@
   build-env:
     - BUILD_TAGS=muslc
 
+# Union
+- name: union
+  dockerfile: imported
+  base-image: ghcr.io/unionlabs/uniond
+  binaries:
+    - /nix/store/*-uniond-${ARCH}-unknown-linux-musl/bin/uniond
+
 # Vidulum
 - name: vidulum
   github-organization: vidulum
@@ -1227,19 +1217,6 @@
     - build/wasmd
   build-env:
     - BUILD_TAGS=muslc
-
-
-# White Whale
-- name: whitewhale
-  github-organization: White-Whale-Defi-Platform
-  github-repo: migaloo-chain
-  dockerfile: cosmos
-  build-target: make install
-  binaries:
-    - /go/bin/migalood
-  build-env:
-    - BUILD_TAGS=muslc
-
 
 # Wormchain (Wormhole Gateway)
 - name: wormchain
