@@ -37,7 +37,9 @@ FROM debian:bullseye
 # FROM ubuntu:22.04
 
 LABEL org.opencontainers.image.source="https://github.com/strangelove-ventures/heighliner"
-
+RUN apt update -y
+RUN apt install -y jq ca-certificates curl
+RUN /usr/sbin/update-ca-certificates
 # Install binaries
 COPY --from=build-env /root/bin /usr/bin
 
