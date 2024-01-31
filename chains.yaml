@@ -155,10 +155,24 @@
   github-organization: ava-labs
   github-repo: avalanchego
   dockerfile: avalanche
-  build-target:
+  pre-build: |
+    startTime="$(sed -n 's|.*"startTime":\([^"]*\),.*|\1|p' genesis/genesis_local.json)"
+    nowTime="$(date +%s)"
+    if [ $nowTime -gt $startTime ]; then
+      sed "s/$startTime/$nowTime/g" genesis/genesis_local.json > genesis/genesis_local_tmp.json
+      mv genesis/genesis_local_tmp.json genesis/genesis_local.json
+    fi
+  build-target: |
+    set -eux
+    # Build AvalancheGo
+    bash scripts/build.sh
+    # Build SubnetEVM
+    git clone -b v0.5.9-ibc-v0.1.0 --single-branch https://github.com/ConsiderItDone/subnet-evm.git
+    cd subnet-evm
     bash scripts/build.sh
   binaries:
     - build/avalanchego
+    - /go/src/github.com/ava-labs/avalanchego/build/plugins/srEXiWaHuhNyGwPUi444Tu47ZEDwxTWrbQiuD7FmgSAQ6X7Dy
 
 # Axelar
 - name: axelar
@@ -216,6 +230,20 @@
     ./scripts/init.sh
   binaries:
     - /build/Basilisk-node/target/${ARCH}-unknown-linux-gnu/release/basilisk
+
+#BeraChain
+- name: berachain
+  dockerfile: none
+  pre-build: |
+    apt update -y
+    apt install -y wget libstdc++6
+    wget -qq 'https://berad-private.s3.us-east-2.amazonaws.com/berad-linux-amd64-v0.0.6-alpha?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAXIHH4ECZJT5YBQR6%2F20231228%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20231228T170607Z&X-Amz-Expires=604800&X-Amz-SignedHeaders=host&X-Amz-Signature=56ccce6310ea364bc78f4089b86749e9f642723ab49bf836dd7d544c55f120b6' -O berad
+    mv berad /usr/bin
+    chmod 555 /usr/bin/berad
+  binaries:
+    - /usr/bin/berad
+  platforms:
+    - linux/amd64
 
 # Bitcanna
 - name: bitcanna
@@ -314,7 +342,7 @@
     COMMIT=$(git log -1 --format='%H')
     LDFLAGS="$LDFLAGS -X github.com/cosmos/cosmos-sdk/version.Name=celestia-app -X github.com/cosmos/cosmos-sdk/version.AppName=celestia-appd -X github.com/cosmos/cosmos-sdk/version.Version=$VERSION -X github.com/cosmos/cosmos-sdk/version.Commit=$COMMIT"
     go install -ldflags="$LDFLAGS" ./cmd/celestia-appd
-  binaries: 
+  binaries:
     - /go/bin/celestia-appd
 
 # Celestia Node
@@ -326,7 +354,7 @@
     versioningPath="github.com/celestiaorg/celestia-node/nodebuilder/node"
     LDFLAGS="$LDFLAGS -X '${versioningPath}.buildTime=$(date)' -X '${versioningPath}.lastCommit=$(git rev-parse HEAD)' -X '${versioningPath}.semanticVersion=$(git describe --tags --dirty=-dev 2>/dev/null || git rev-parse --abbrev-ref HEAD)'"
     go install -ldflags="$LDFLAGS" ./cmd/celestia
-  binaries: 
+  binaries:
     - /go/bin/celestia
 
 # Cerberus
@@ -529,6 +557,17 @@
   build-target: make install
   binaries:
     - /go/bin/emd
+
+# Ethos
+- name: ethos
+  github-organization: Ethos-Works
+  github-repo: ethos-chain
+  dockerfile: cosmos
+  build-target: make install
+  build-env:
+    - BUILD_TAGS=muslc
+  binaries:
+    - /go/bin/ethosd
 
 # Evmos
 - name: evmos
@@ -780,6 +819,18 @@
   binaries:
     - /go/bin/marsd
 
+# Mesh-security-sdk simd
+- name: meshd
+  github-organization: osmosis-labs
+  github-repo: mesh-security-sdk
+  dockerfile: cosmos
+  build-target: make install
+  build-dir: demo
+  build-env:
+    - BUILD_TAGS=muslc
+  binaries:
+    - /go/bin/meshd
+
 # Migaloo
 - name: migaloo
   github-organization: White-Whale-Defi-Platform
@@ -841,7 +892,7 @@
 
 # Noble
 - name: noble
-  github-organization: strangelove-ventures
+  github-organization: noble-assets
   github-repo: noble
   dockerfile: cosmos
   build-target: make install
@@ -1194,7 +1245,7 @@
 # Union
 - name: union
   dockerfile: imported
-  base-image: ghcr.io/unionlabs/uniond
+  base-image: ghcr.io/unionlabs/uniond-release
   binaries:
     - /nix/store/*-uniond-${ARCH}-unknown-linux-musl/bin/uniond
 
@@ -1226,7 +1277,7 @@
   build-target: |
     BUILD_TAGS=netgo,muslc
     LD_FLAGS="-s -w -X github.com/cosmos/cosmos-sdk/version.Name=wormchain -X github.com/cosmos/cosmos-sdk/version.Version=$(echo $(git describe --tags) | sed 's/^v//') -X github.com/cosmos/cosmos-sdk/version.Commit=$(git log -1 --format='%H') -X github.com/cosmos/cosmos-sdk/version.BuildTags=\"${BUILD_TAGS}\" -X github.com/cosmos/cosmos-sdk/version.ServerName=wormchaind"
-    go build -mod=readonly -tags="${BUILD_TAGS}" -ldflags="$LDFLAGS ${LD_FLAGS}" -o build/wormchaind cmd/wormchaind/main.go 
+    go build -mod=readonly -tags="${BUILD_TAGS}" -ldflags="$LDFLAGS ${LD_FLAGS}" -o build/wormchaind cmd/wormchaind/main.go
   build-dir: wormchain
   binaries:
     - wormchain/build/wormchaind
