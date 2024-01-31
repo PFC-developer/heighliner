@@ -263,6 +263,17 @@
   binaries:
     - /go/bin/bitsongd
 
+# BlockX
+- name: blockx
+  github-organization: BlockXLabs
+  github-repo: BlockX-Genesis-Mainnet1
+  dockerfile: cosmos
+  build-target: make install
+  binaries:
+    - /go/bin/blockxd
+  build-env:
+    - BUILD_TAGS=muslc
+
 # Bostrom
 - name: bostrom
   github-organization: cybercongress
@@ -598,6 +609,17 @@
   binaries:
     - /go/bin/firmachaind
 
+# Furya
+- name: furya
+  github-organization: furysport
+  github-repo: furya-chain
+  dockerfile: cosmos
+  build-target: make install
+  build-env:
+    - BUILD_TAGS=muslc
+  binaries:
+    - /go/bin/furyad
+
 # Gravity Bridge
 - name: gravitybridge
   github-organization: Gravity-Bridge
@@ -658,15 +680,14 @@
 - name: injective
   pre-build: |
     apt update
-    apt install unzip
+    apt install -y unzip
     wget https://github.com/InjectiveLabs/injective-chain-releases/releases/download/$VERSION/linux-amd64.zip
     unzip linux-amd64.zip
-    mv injectived peggo injective-exchange /usr/bin
+    mv injectived peggo /usr/bin
     mv libwasmvm.x86_64.so /usr/lib
   binaries:
     - /usr/bin/injectived
     - /usr/bin/peggo
-    - /usr/bin/injective-exchange
   libraries:
     - /usr/lib/libwasmvm.x86_64.so
   platforms:
@@ -1012,6 +1033,20 @@
     - WITH_LEDGER=false
     - WITH_CLEVELDB=false
     - BUILD_TAGS=muslc musl dynamic
+# Pryzm
+# https://storage.googleapis.com/pryzm-resources/pryzmd-0.7.0-linux-amd64.tar.gz
+# https://storage.googleapis.com/pryzm-resources/pryzmd-0.9.0-linux-amd64.tar.gz
+#    wget https://storage.googleapis.com/pryzm-zone/core/0.10.0/pryzmd-0.10.0-linux-amd64.tar.gz
+- name: pryzm
+  pre-build: |
+    apt update
+    wget https://storage.googleapis.com/pryzm-zone/core/0.11.1/pryzmd-0.11.1-linux-amd64.tar.gz
+    tar xfz pryzmd-0.11.1-linux-amd64.tar.gz
+    mv pryzmd /usr/bin
+  binaries:
+    - /usr/bin/pryzmd
+  platforms:
+    - linux/amd64
 
 # Quasar
 - name: quasar
@@ -1150,6 +1185,7 @@
   github-organization: public-awesome
   github-repo: stargaze
   dockerfile: cosmos
+  go-version: 1.21.4
   build-target: make install
   binaries:
     - /go/bin/starsd
@@ -1211,7 +1247,7 @@
 - name: terra-classic
   github-organization: classic-terra
   github-repo: core
-  dockerfile: cosmos
+  dockerfile: lunc
   build-target: make install
   binaries:
     - /go/bin/terrad
@@ -1266,6 +1302,17 @@
   build-target: make build
   binaries:
     - build/wasmd
+  build-env:
+    - BUILD_TAGS=muslc
+
+# White Whale
+- name: whitewhale
+  github-organization: White-Whale-Defi-Platform
+  github-repo: migaloo-chain
+  dockerfile: cosmos
+  build-target: make install
+  binaries:
+    - /go/bin/migalood
   build-env:
     - BUILD_TAGS=muslc
 
