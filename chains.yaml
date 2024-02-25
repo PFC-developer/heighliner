@@ -964,12 +964,10 @@
   github-organization: oraichain
   github-repo: orai
   dockerfile: cosmos
-  build-target: |
-    set -eux
-    cd orai
-    make build
+  build-dir: orai
+  build-target: make build
   binaries:
-    - build/oraid
+    - orai/build/oraid
   build-env:
     - BUILD_TAGS=muslc
 
