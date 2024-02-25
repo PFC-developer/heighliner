@@ -959,6 +959,21 @@
   binaries:
     - /build/arc/orchestrator/target/${ARCH}-unknown-linux-gnu/release/gbt
 
+# Oraichain
+- name: oraichain
+  github-organization: oraichain
+  github-repo: orai
+  dockerfile: cosmos
+  build-target: |
+    set -eux
+    cd orai
+    make build
+  binaries:
+    - build/oraid
+  build-env:
+    - BUILD_TAGS=muslc
+
+
 # Osmosis
 - name: osmosis
   github-organization: osmosis-labs
