@@ -821,6 +821,14 @@
   build-env:
     - ENV=mainnet
 
+- name: lava
+  github-organization: lavanet
+  github-repo: lava
+  dockerfile: cosmos
+  build-target: make install-lavad
+  binaries:
+    - /go/bin/lavad
+
 # Likecoin
 - name: likecoin
   github-organization: likecoin
@@ -1102,6 +1110,17 @@
   build-target: make build
   binaries:
     - build/quicksilverd
+  build-env:
+    - BUILD_TAGS=muslc
+
+# Passage
+- name: passage
+  github-organization: envadiv
+  github-repo: Passage3D
+  dockerfile: cosmos
+  build-target: make install
+  binaries:
+    - /go/bin/passage
   build-env:
     - BUILD_TAGS=muslc
 
