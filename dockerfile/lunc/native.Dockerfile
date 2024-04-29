@@ -26,9 +26,12 @@ ARG BUILD_DIR
 ARG WASMVM_VERSION
 
 RUN set -eux;\
+      echo ${WASMVM_VERSION}
+
+RUN set -eux;\
     export ARCH=$(uname -m);\
     if [ ! -z "${WASMVM_VERSION}" ]; then\
-      wget -O /lib/libwasmvm_muslc.a https://github.com/classic-terra/wasmvm/releases/download/${WASMVM_VERSION}/libwasmvm_muslc.$(uname -m).a;\
+      wget -O /lib/libwasmvm_muslc.a https://github.com/classic-terra/wasmvm/releases/download/v1.1.1-terra.2-rc.0/libwasmvm_muslc.$(uname -m).a;\
     fi;\
     export CGO_ENABLED=1 LDFLAGS='-linkmode external -extldflags "-static"';\
     if [ ! -z "$PRE_BUILD" ]; then sh -c "${PRE_BUILD}"; fi;\

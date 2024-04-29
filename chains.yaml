@@ -100,6 +100,7 @@
 - name: andromeda
   github-organization: andromedaprotocol
   github-repo: andromedad
+  go-version: 1.21.8
   dockerfile: cosmos
   build-target: make install
   binaries:
@@ -620,6 +621,20 @@
   binaries:
     - /go/bin/furyad
 
+# Galactica
+- name: galactica
+  github-organization: Galactica-corp
+  github-repo: galactica
+  dockerfile: cosmos
+  build-target: make install
+    #  pre-build: |
+    #    go mod tidy
+  build-env:
+    - BUILD_TAGS=muslc
+  binaries:
+    - /go/bin/galacticad
+
+
 # Gravity Bridge
 - name: gravitybridge
   github-organization: Gravity-Bridge
@@ -680,7 +695,6 @@
 - name: injective
   pre-build: |
     apt update
-    apt install -y unzip
     wget https://github.com/InjectiveLabs/injective-chain-releases/releases/download/$VERSION/linux-amd64.zip
     unzip linux-amd64.zip
     mv injectived peggo /usr/bin
@@ -778,6 +792,7 @@
 - name: kujira
   github-organization: Team-Kujira
   github-repo: core
+  go-version: 1.21.8
   dockerfile: cosmos
   build-target: make install
   binaries:
@@ -819,6 +834,17 @@
   build-target: make install
   binaries:
     - /go/bin/liked
+
+# loop-chain
+- name: loop-chain
+  github-organization: LoopFans
+  github-repo: loop-chain
+  dockerfile: cosmos
+  build-target: make install
+  binaries:
+    - /go/bin/loopd
+  build-env:
+    - BUILD_TAGS=muslc
 
 # Lumnetwork
 - name: lumnetwork
@@ -971,6 +997,23 @@
   build-env:
     - BUILD_TAGS=muslc
 
+# Oraichain
+- name: oraichain-patch
+  binaries:
+    - /usr/bin/oraid
+  pre-build: |
+    apt update
+    wget https://github.com/oraichain/orai/releases/download/v0.41.7-ASA-2024-007/oraid-amd64
+    mv oraid-amd64 /usr/bin/oraid
+    chmod 755 /usr/bin/oraid
+    wget https://github.com/oraichain/wasmvm/raw/v1.5.2/internal/api/libwasmvm.x86_64.so
+    mv libwasmvm.x86_64.so /usr/lib/
+  libraries:
+    - /usr/lib/libwasmvm.x86_64.so
+  platforms:
+    - linux/amd64
+ 
+
 
 # Osmosis
 - name: osmosis
@@ -1050,11 +1093,12 @@
 # https://storage.googleapis.com/pryzm-resources/pryzmd-0.7.0-linux-amd64.tar.gz
 # https://storage.googleapis.com/pryzm-resources/pryzmd-0.9.0-linux-amd64.tar.gz
 #    wget https://storage.googleapis.com/pryzm-zone/core/0.10.0/pryzmd-0.10.0-linux-amd64.tar.gz
+#    wget https://storage.googleapis.com/pryzm-zone/core/0.11.1/pryzmd-0.11.1-linux-amd64.tar.gz
 - name: pryzm
   pre-build: |
     apt update
-    wget https://storage.googleapis.com/pryzm-zone/core/0.11.1/pryzmd-0.11.1-linux-amd64.tar.gz
-    tar xfz pryzmd-0.11.1-linux-amd64.tar.gz
+    wget https://storage.googleapis.com/pryzm-zone/core/0.13.0/pryzmd-0.13.0-linux-amd64.tar.gz
+    tar xfz pryzmd-0.13.0-linux-amd64.tar.gz
     mv pryzmd /usr/bin
   binaries:
     - /usr/bin/pryzmd
@@ -1184,6 +1228,24 @@
   binaries:
     - build/simd
 
+# soar
+- name: soarchain
+  pre-build: |
+    apt update
+    apt install -y unzip
+
+    wget https://github.com/soar-robotics/testnet-binaries/raw/main/v0.2.9/debian11/soarchain_linux_amd64.tar.gz
+    wget https://github.com/soar-robotics/testnet-validator-onboard/raw/main/release/libwasmvm.x86_64.so
+    tar xfz soarchain_linux_amd64.tar.gz
+    mv soarchaind /usr/bin
+    mv libwasmvm.x86_64.so /usr/lib
+  binaries:
+    - /usr/bin/soarchaind
+  libraries:
+    - /usr/lib/libwasmvm.x86_64.so
+  platforms:
+    - linux/amd64
+
 # Sommelier
 - name: sommelier
   github-organization: peggyjv
@@ -1224,6 +1286,8 @@
   build-target: make build
   binaries:
     - build/strided
+  build-env:
+    - BUILD_TAGS=muslc
 
 # Tendermint
 - name: tendermint
@@ -1246,6 +1310,17 @@
     - BUILD_TAGS=muslc
 
 # Terra
+- name: terra-patched
+  binaries:
+    - /usr/bin/terrad
+  pre-build: |
+    apt update
+    wget https://tfl-phoenix-1.s3.amazonaws.com/ASA-2024-007/terra_v2.10.6_Linux_x86_64.tar.gz
+    tar xfz ./terra_v2.10.6_Linux_x86_64.tar.gz
+    mv terrad /usr/bin
+  platforms:
+    - linux/amd64
+ 
 - name: terra
   github-organization: terra-money
   github-repo: core
@@ -1255,6 +1330,19 @@
     - /go/bin/terrad
   build-env:
     - BUILD_TAGS=muslc
+
+# Terra Classic
+- name: terra-classic-patch
+  pre-build: |
+    apt update
+    wget https://github.com/classic-terra/documents/raw/main/patches/terra_2.4.2_Linux_x86_64-patch-asa-2024-007.tar.gz
+    tar xfz ./terra_2.4.2_Linux_x86_64-patch-asa-2024-007.tar.gz
+    mv terrad /usr/bin
+    ls -l /usr/bin
+  binaries:
+    - /usr/bin/terrad
+  platforms:
+    - linux/amd64
 
 # Terra Classic
 - name: terra-classic
