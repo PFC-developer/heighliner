@@ -2,10 +2,15 @@
 - name: sei
   github-organization: sei-protocol
   github-repo: sei-chain
-  dockerfile: cosmos
+  dockerfile: sei
   build-target: |
-    make install
+    make install install-price-feeder
   binaries:
     - /go/bin/seid
+    - /go/bin/price-feeder
+  libraries:
+    - /usr/lib/libwasmvm.x86_64.so
+  platforms:
+    - linux/amd64
   build-env:
     - BUILD_TAGS=muslc

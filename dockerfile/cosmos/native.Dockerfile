@@ -131,6 +131,7 @@ COPY --from=infra-toolkit /busybox/busybox /bin/sh
 
 # Install jq
 COPY --from=infra-toolkit /usr/local/bin/jq /bin/
+COPY --from=infra-toolkit /usr/bin/ldd /bin/
 
 # Add hard links for read-only utils
 # Will then only have one copy of the busybox minimal binary file with all utils pointing to the same underlying inode

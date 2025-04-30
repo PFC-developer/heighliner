@@ -3,6 +3,8 @@
   github-organization: cosmos
   github-repo: gaia
   dockerfile: cosmos
+  pre-build: |
+    apk add libstdc++
   build-target: make install
   build-env:
     - LEDGER_ENABLED=false

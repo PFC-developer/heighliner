@@ -192,7 +192,7 @@ RUN sh -c 'i=0; while read DIR; do\
     done < /root/dir_abs.list'
 
 # Remove write utils
-RUN rm ln rm mv mkdir dirname
+#RUN rm ln rm mv mkdir dirname
 
 # Install trusted CA certificates
 COPY --from=alpine-3 /etc/ssl/cert.pem /etc/ssl/cert.pem

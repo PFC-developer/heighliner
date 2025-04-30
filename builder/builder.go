@@ -141,6 +141,19 @@ func rawDockerfile(
 			return dockerfileEmbeddedOrLocal("cosmos/Dockerfile", dockerfile.Cosmos)
 		}
 		return dockerfileEmbeddedOrLocal("cosmos/native.Dockerfile", dockerfile.CosmosNative)
+	case DockerfileTypeSei:
+		if local {
+			if useBuildKit {
+				return dockerfileEmbeddedOrLocal("sei/localcross.Dockerfile", dockerfile.CosmosLocalCross)
+			}
+			return dockerfile.CosmosLocal
+		}
+		if useBuildKit {
+			return dockerfileEmbeddedOrLocal("sei/Dockerfile", dockerfile.Cosmos)
+		}
+		return dockerfileEmbeddedOrLocal("sei/native.Dockerfile", dockerfile.CosmosNative)
+
+
 	case DockerfileTypeAvalanche:
 		if useBuildKit {
 			return dockerfileEmbeddedOrLocal("avalanche/Dockerfile", dockerfile.Avalanche)
@@ -385,7 +398,7 @@ func (h *HeighlinerBuilder) buildChainNodeDockerImage(
 		gv = GetImageAndVersionForGoVersion(goVersion, buildCfg.AlpineVersion)
 	}
 
-	if dockerfile == DockerfileTypeCosmos || dockerfile == DockerfileTypeAvalanche {
+	if dockerfile == DockerfileTypeCosmos || dockerfile == DockerfileTypeAvalanche || dockerfile == DockerfileTypeSei {
 		if err != nil {
 			return fmt.Errorf("error getting mod file: %w", err)
 		}
