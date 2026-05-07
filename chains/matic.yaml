@@ -1,0 +1,10 @@
+# Matic
+- name: matic
+  github-organization: maticnetwork
+  github-repo: heimdall
+  dockerfile: cosmos
+  build-target: make install
+  binaries:
+    - /go/bin/heimdalld
+  build-env:
+    - BUILD_TAGS=muslc

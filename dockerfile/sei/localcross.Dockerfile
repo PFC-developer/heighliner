@@ -1,33 +1,27 @@
 ARG BASE_VERSION
-FROM golang:${BASE_VERSION} AS build-env
+FROM --platform=$BUILDPLATFORM golang:${BASE_VERSION} AS build-env
 
-RUN apk add --update --no-cache curl make git libc-dev bash gcc linux-headers eudev-dev ncurses-dev
-
-ARG CLONE_KEY
-
-RUN if [ ! -z "${CLONE_KEY}" ]; then\
-        mkdir -p ~/.ssh;\
-        echo "${CLONE_KEY}" | base64 -d > ~/.ssh/id_ed25519;\
-        chmod 600 ~/.ssh/id_ed25519;\
-        apk add openssh;\
-        git config --global --add url."ssh://git@github.com/".insteadOf "https://github.com/";\
-        ssh-keyscan github.com >> ~/.ssh/known_hosts;\
-    fi
+RUN apk add --update --no-cache curl make git libc-dev bash gcc linux-headers eudev-dev
 
 ARG TARGETARCH
 ARG BUILDARCH
+
+RUN if [ "${TARGETARCH}" = "arm64" ] && [ "${BUILDARCH}" != "arm64" ]; then\
+        wget -c https://musl.cc/aarch64-linux-musl-cross.tgz -O - | tar -xzvv --strip-components 1 -C /usr;\
+    elif [ "${TARGETARCH}" = "amd64" ] && [ "${BUILDARCH}" != "amd64" ]; then\
+        wget -c https://musl.cc/x86_64-linux-musl-cross.tgz -O - | tar -xzvv --strip-components 1 -C /usr;\
+    fi
+
 ARG GITHUB_ORGANIZATION
 ARG REPO_HOST
 
-WORKDIR /go/src/${REPO_HOST}/${GITHUB_ORGANIZATION}
+WORKDIR /go/src/${REPO_HOST}/${GITHUB_ORGANIZATION}/${GITHUB_REPO}
 
 ARG GITHUB_REPO
 ARG VERSION
 ARG BUILD_TIMESTAMP
 
-RUN git clone -b ${VERSION} --single-branch https://${REPO_HOST}/${GITHUB_ORGANIZATION}/${GITHUB_REPO}.git --recursive
-
-WORKDIR /go/src/${REPO_HOST}/${GITHUB_ORGANIZATION}/${GITHUB_REPO}
+ADD . .
 
 ARG BUILD_TARGET
 ARG BUILD_ENV
@@ -36,15 +30,41 @@ ARG PRE_BUILD
 ARG BUILD_DIR
 ARG WASMVM_VERSION
 
+ARG CLONE_KEY
+
+RUN if [ ! -z "${CLONE_KEY}" ]; then\
+  mkdir -p ~/.ssh;\
+  echo "${CLONE_KEY}" | base64 -d > ~/.ssh/id_ed25519;\
+  chmod 600 ~/.ssh/id_ed25519;\
+  apk add openssh;\
+  git config --global --add url."ssh://git@github.com/".insteadOf "https://github.com/";\
+  ssh-keyscan github.com >> ~/.ssh/known_hosts;\
+  fi
+
 RUN set -eux;\
-    export ARCH=$(uname -m);\
+    LIBDIR=/lib;\
+    if [ "${TARGETARCH}" = "arm64" ]; then\
+      export ARCH=aarch64;\
+      if [ "${BUILDARCH}" != "arm64" ]; then\
+        LIBDIR=/usr/aarch64-linux-musl/lib;\
+        mkdir -p $LIBDIR;\
+        export CC=aarch64-linux-musl-gcc CXX=aarch64-linux-musl-g++;\
+      fi;\
+    elif [ "${TARGETARCH}" = "amd64" ]; then\
+      export ARCH=x86_64;\
+      if [ "${BUILDARCH}" != "amd64" ]; then\
+        LIBDIR=/usr/x86_64-linux-musl/lib;\
+        mkdir -p $LIBDIR;\
+        export CC=x86_64-linux-musl-gcc CXX=x86_64-linux-musl-g++;\
+      fi;\
+    fi;\
     if [ ! -z "${WASMVM_VERSION}" ]; then\
       WASMVM_REPO=$(echo $WASMVM_VERSION | awk '{print $1}');\
       WASMVM_VERS=$(echo $WASMVM_VERSION | awk '{print $2}');\
-      wget -O /lib/libwasmvm_muslc.a https://${WASMVM_REPO}/releases/download/${WASMVM_VERS}/libwasmvm_muslc.$(uname -m).a;\
-      ln /lib/libwasmvm_muslc.a /lib/libwasmvm_muslc.$(uname -m).a;\
+      wget -O $LIBDIR/libwasmvm_muslc.a https://${WASMVM_REPO}/releases/download/${WASMVM_VERS}/libwasmvm_muslc.${ARCH}.a;\
+      ln $LIBDIR/libwasmvm_muslc.a $LIBDIR/libwasmvm_muslc.$(uname -m).a;\
     fi;\
-    export CGO_ENABLED=1 LDFLAGS='-linkmode external -extldflags "-static"';\
+    export GOOS=linux GOARCH=$TARGETARCH CGO_ENABLED=1 LDFLAGS='-linkmode external -extldflags "-static"';\
     if [ ! -z "$PRE_BUILD" ]; then sh -c "${PRE_BUILD}"; fi;\
     if [ ! -z "$BUILD_TARGET" ]; then\
       if [ ! -z "$BUILD_ENV" ]; then export ${BUILD_ENV}; fi;\
@@ -52,6 +72,8 @@ RUN set -eux;\
       if [ ! -z "$BUILD_DIR" ]; then cd "${BUILD_DIR}"; fi;\
       sh -c "${BUILD_TARGET}";\
     fi
+
+RUN if [ -d "/go/bin/linux_${TARGETARCH}" ]; then mv /go/bin/linux_${TARGETARCH}/* /go/bin/; fi
 
 # Copy all binaries to /root/bin, for a single place to copy into final image.
 # If a colon (:) delimiter is present, binary will be renamed to the text after the delimiter.
@@ -78,8 +100,8 @@ RUN bash -c 'set -eux;\
     if [ ! -z "$BINPATH" ]; then\
       if [[ $BINPATH == *"/"* ]]; then\
         mkdir -p "$(dirname "${BINPATH}")";\
-        cp "$BIN" "${BINPATH}"; \
-      else \
+        cp "$BIN" "${BINPATH}";\
+      else\
         cp "$BIN" "/root/bin/${BINPATH}";\
       fi;\
     else\
@@ -107,8 +129,11 @@ RUN bash -c 'set -eux;\
   done'
 
 # Use minimal busybox from infra-toolkit image for final scratch image
-FROM ghcr.io/strangelove-ventures/infra-toolkit:v0.1.12 AS infra-toolkit
+FROM ghcr.io/strangelove-ventures/infra-toolkit:v0.1.4 AS infra-toolkit
 RUN addgroup --gid 1025 -S heighliner && adduser --uid 1025 -S heighliner -G heighliner
+
+# Use ln and rm from full featured busybox for assembling final image
+FROM busybox:1.34.1-musl AS busybox-full
 
 # Use alpine to source the latest CA certificates
 FROM alpine:3 as alpine-3
@@ -120,23 +145,21 @@ LABEL org.opencontainers.image.source="https://github.com/strangelove-ventures/h
 
 WORKDIR /bin
 
-# Install minimal busybox as `sh` and `ln` binaries
-# sh allows using `RUN` commands
+# Install ln (for making hard links) and rm (for cleanup) from full busybox image (will be deleted, only needed for image assembly)
+COPY --from=busybox-full /bin/ln /bin/mv /bin/rm /bin/mkdir /bin/dirname ./
+
+# Install minimal busybox image as shell binary (will create hardlinks for the rest of the binaries to this data)
 COPY --from=infra-toolkit /busybox/busybox /bin/sh
-# ln creates hardlinks for exposed binaries from infra-toolkit min config
-COPY --from=infra-toolkit /busybox/busybox /bin/ln
 
 # Install jq
 COPY --from=infra-toolkit /usr/local/bin/jq /bin/
-COPY --from=infra-toolkit /usr/bin/ldd /bin/
 
-# Add hard links for utils
+# Add hard links for read-only utils
 # Will then only have one copy of the busybox minimal binary file with all utils pointing to the same underlying inode
 RUN for b in \
   cat \
   date \
   df \
-  dirname \
   du \
   env \
   grep \
@@ -144,11 +167,7 @@ RUN for b in \
   less \
   ls \
   md5sum \
-  mkdir \
-  mv \
   pwd \
-  rm \
-  sed \
   sha1sum \
   sha256sum \
   sha3sum \
@@ -159,12 +178,9 @@ RUN for b in \
   tar \
   tee \
   tr \
-  vi \
   watch \
   which \
-  ; do ln ln $b; done; \
-  rm -rf sh; \
-  ln ln sh;
+  ; do ln sh $b; done
 
 # Copy over absolute path directories
 COPY --from=build-env /root/dir_abs /root/dir_abs
@@ -178,6 +194,9 @@ RUN sh -c 'i=0; while read DIR; do\
       mv /root/dir_abs/$i $DIR;\
       i=$((i+1));\
     done < /root/dir_abs.list'
+
+#  Remove write utils
+RUN rm ln rm mv mkdir dirname
 
 # Install chain binaries
 COPY --from=build-env /root/bin /bin

@@ -41,7 +41,8 @@ RUN set -eux;\
     if [ ! -z "${WASMVM_VERSION}" ]; then\
       WASMVM_REPO=$(echo $WASMVM_VERSION | awk '{print $1}');\
       WASMVM_VERS=$(echo $WASMVM_VERSION | awk '{print $2}');\
-      wget -O /lib/libwasmvm_muslc.a https://${WASMVM_REPO}/releases/download/${WASMVM_VERS}/libwasmvm_muslc.$(uname -m).a;\
+      wget -O /lib/libwasmvm_muslc.a https://github.com/CosmWasm/wasmvm/releases/download/v1.5.4/libwasmvm_muslc.$(uname -m).a;\
+      #wget -O /lib/libwasmvm_muslc.a https://${WASMVM_REPO}/releases/download/${WASMVM_VERS}/libwasmvm_muslc.$(uname -m).a;\
       ln /lib/libwasmvm_muslc.a /lib/libwasmvm_muslc.$(uname -m).a;\
     fi;\
     export CGO_ENABLED=1 LDFLAGS='-linkmode external -extldflags "-static"';\
@@ -86,7 +87,6 @@ RUN bash -c 'set -eux;\
       cp "$BIN" /root/bin/;\
     fi;\
   done'
-
 RUN mkdir -p /root/lib
 ARG LIBRARIES
 ENV LIBRARIES_ENV ${LIBRARIES}
@@ -107,8 +107,11 @@ RUN bash -c 'set -eux;\
   done'
 
 # Use minimal busybox from infra-toolkit image for final scratch image
-FROM ghcr.io/strangelove-ventures/infra-toolkit:v0.1.12 AS infra-toolkit
+FROM ghcr.io/strangelove-ventures/infra-toolkit:v0.1.4 AS infra-toolkit
 RUN addgroup --gid 1025 -S heighliner && adduser --uid 1025 -S heighliner -G heighliner
+
+# Use ln and rm from full featured busybox for assembling final image
+FROM busybox:1.34.1-musl AS busybox-full
 
 # Use alpine to source the latest CA certificates
 FROM alpine:3 as alpine-3
@@ -120,23 +123,22 @@ LABEL org.opencontainers.image.source="https://github.com/strangelove-ventures/h
 
 WORKDIR /bin
 
-# Install minimal busybox as `sh` and `ln` binaries
-# sh allows using `RUN` commands
+# Install ln (for making hard links) and rm (for cleanup) from full busybox image (will be deleted, only needed for image assembly)
+COPY --from=busybox-full /bin/ln /bin/mv /bin/rm /bin/mkdir /bin/dirname ./
+
+# Install minimal busybox image as shell binary (will create hardlinks for the rest of the binaries to this data)
 COPY --from=infra-toolkit /busybox/busybox /bin/sh
-# ln creates hardlinks for exposed binaries from infra-toolkit min config
-COPY --from=infra-toolkit /busybox/busybox /bin/ln
 
 # Install jq
 COPY --from=infra-toolkit /usr/local/bin/jq /bin/
 COPY --from=infra-toolkit /usr/bin/ldd /bin/
 
-# Add hard links for utils
+# Add hard links for read-only utils
 # Will then only have one copy of the busybox minimal binary file with all utils pointing to the same underlying inode
 RUN for b in \
   cat \
   date \
   df \
-  dirname \
   du \
   env \
   grep \
@@ -144,11 +146,7 @@ RUN for b in \
   less \
   ls \
   md5sum \
-  mkdir \
-  mv \
   pwd \
-  rm \
-  sed \
   sha1sum \
   sha256sum \
   sha3sum \
@@ -159,12 +157,9 @@ RUN for b in \
   tar \
   tee \
   tr \
-  vi \
   watch \
   which \
-  ; do ln ln $b; done; \
-  rm -rf sh; \
-  ln ln sh;
+  ; do ln sh $b; done
 
 # Copy over absolute path directories
 COPY --from=build-env /root/dir_abs /root/dir_abs
@@ -178,6 +173,9 @@ RUN sh -c 'i=0; while read DIR; do\
       mv /root/dir_abs/$i $DIR;\
       i=$((i+1));\
     done < /root/dir_abs.list'
+
+#  Remove write utils
+RUN rm ln rm mv mkdir dirname
 
 # Install chain binaries
 COPY --from=build-env /root/bin /bin

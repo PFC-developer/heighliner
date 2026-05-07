@@ -4,6 +4,7 @@ type DockerfileType string
 
 const (
 	DockerfileTypeCosmos    DockerfileType = "cosmos"
+	DockerfileTypeSei DockerfileType = "sei"
 	DockerfileTypeAvalanche DockerfileType = "avalanche"
 	DockerfileTypeCargo     DockerfileType = "cargo"
 	DockerfileTypeImported  DockerfileType = "imported"
@@ -17,6 +18,7 @@ var deprecationReplacements = [][2]DockerfileType{
 	{DockerfileTypeGo, DockerfileTypeCosmos},
 	{DockerfileTypeGo, DockerfileTypeAvalanche},
 	{DockerfileTypeRust, DockerfileTypeCargo},
+	{DockerfileTypeGo, DockerfileTypeSei},
 }
 
 type ChainNodeConfig struct {

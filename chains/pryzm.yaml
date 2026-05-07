@@ -1,10 +1,17 @@
 # Pryzm
 #    wget https://storage.googleapis.com/pryzm-zone/core/0.18.0/pryzmd-0.18.0-linux-amd64.tar.gz
+#    wget https://storage.googleapis.com/pryzm-zone/core/0.21.0/pryzmd-0.21.0-linux-amd64.tar.gz
+#    wget https://storage.googleapis.com/pryzm-zone/core/0.22.1/pryzmd-0.22.1-linux-amd64.tar.gz
 - name: pryzm
   pre-build: |
     apt update
-    wget https://storage.googleapis.com/pryzm-zone/core/0.19.0/pryzmd-0.19.0-linux-amd64.tar.gz
-    tar xfz pryzmd-0.19.0-linux-amd64.tar.gz
+    #    wget https://storage.googleapis.com/pryzm-zone/core/0.25.0/pryzmd-0.25.0-linux-amd64.tar.gz
+    # wget https://storage.googleapis.com/pryzm-zone/core/0.26.0/pryzmd-0.26.0-linux-amd64
+    #wget https://storage.googleapis.com/pryzm-zone/core/0.27.0/pryzmd-0.27.0-linux-amd64
+    wget https://storage.googleapis.com/pryzm-zone/core/0.28.0/pryzmd-0.28.0-linux-amd64
+    #tar xfz pryzmd-0.25.0-linux-amd64.tar.gz
+    mv pryzmd-0.28.0-linux-amd64 pryzmd
+    chmod 755 pryzmd
     mv pryzmd /usr/bin
   binaries:
     - /usr/bin/pryzmd

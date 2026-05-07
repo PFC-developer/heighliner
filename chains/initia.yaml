@@ -1,0 +1,26 @@
+# Initia
+- name: initia2
+  github-organization: initia-labs
+  github-repo: initia
+  go-version: 1.23
+  alpine-version: 3.19
+  dockerfile: cosmos
+  build-target: LEDGER_ENABLED=false BUILD_TAGS=muslc GOARCH=${GOARCH} LDFLAGS="-linkmode=external -extldflags \"-Wl,-z,muldefs -static\"" make install
+  #build-target: CGO_ENABLED=1 LDFLAGS="-linkmode=external -extldflags" make build
+  pre-build: |
+    apk add --update  cmake ca-certificates build-base git cmake  curl make git libc-dev bash gcc linux-headers eudev-dev ncurses-dev
+
+      wget -O /lib/libcompiler_muslc.x86_64.a https://github.com/initia-labs/movevm/releases/download/v1.0.0/libcompiler_muslc.x86_64.a
+      wget -O /lib/libmovevm_muslc.x86_64.a https://github.com/initia-labs/movevm/releases/download/v1.0.0/libmovevm_muslc.x86_64.a
+
+      cp /lib/libcompiler_muslc.x86_64.a /lib/libcompiler_muslc.a
+      cp /lib/libmovevm_muslc.x86_64.a /lib/libmovevm_muslc.a
+
+  binaries:
+    - /go/bin/initiad
+  build-env:
+    - BUILD_TAGS=muslc
+    - LEDGER_ENABLED=false
+    - GOARCH=amd64
+  platforms:
+    - linux/amd64

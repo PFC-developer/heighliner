@@ -1,8 +1,21 @@
 # elys
-- name: elys
+- name: elys2
   github-organization: elys-network
   github-repo: elys
   dockerfile: cosmos
+  pre-build: |
+    apk add libstdc++
+    apk add libc6-dev
+    #wget https://github.com/elys-network/elys/releases/download/v3.0.0/elysd-v3.0.0-linux-amd64
+    #mv elysd-v3.0.0-linux-amd64 elysd
+    #chmod 755 elysd
+    #mv elysd /usr/bin
   build-target: make install
+
+  build-env:
+    - LEDGER_ENABLED=false
+    - BUILD_TAGS=muslc
   binaries:
     - /go/bin/elysd
+  platforms:
+    - linux/amd64

@@ -1,5 +1,16 @@
 # Union
 - name: union
+  pre-build: |
+    apt update
+    wget https://github.com/unionlabs/union/releases/download/uniond%2Fv0.25.0/uniond.x86_64-linux.tar.gz
+    tar xfz uniond.x86_64-linux.tar.gz
+    mv result/bin/uniond /usr/bin
+  binaries:
+    - /usr/bin/uniond
+  platforms:
+    - linux/amd64
+
+- name: unionX
   dockerfile: cargo
   github-organization: unionlabs
   github-repo: union
