@@ -3,9 +3,14 @@
   github-organization: provenance-io
   github-repo: provenance
   dockerfile: cosmos
+  go-version: 1.25.8
   build-target: make install
-  pre-build: |
-    wget -O /lib/libwasmvm.x86_64.so https://github.com/CosmWasm/wasmvm/releases/download/v2.1.0/libwasmvm.x86_64.so
+#  pre-build: |
+#    wget -O /lib/libwasmvm.x86_64.so https://github.com/CosmWasm/wasmvm/releases/download/v2.1.0/libwasmvm.x86_64.so
+#  pre-build: |
+    apt update
+    wget -O /lib/libwasmvm.x86_64.so https://github.com/CosmWasm/wasmvm/releases/download/v3.0.3/libwasmvm.x86_64.so
+    wget -O /lib/libwasmvm_muslc.a https://github.com/CosmWasm/wasmvm/releases/download/v3.0.3/libwasmvm_muslc.x86_64.a
   binaries:
     - /go/bin/provenanced
   build-env:
